@@ -1,0 +1,51 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+  schemas           = ["markplan"]
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  name             String?
+  image            String?
+  stripeCustomerId String?       @unique
+  subscription     Subscription?
+  plans            Plan[]
+  createdAt        DateTime      @default(now())
+
+  @@schema("markplan")
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSubscriptionId String   @unique
+  stripePriceId        String
+  status               String
+  currentPeriodEnd     DateTime
+  updatedAt            DateTime @updatedAt
+
+  @@schema("markplan")
+}
+
+model Plan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea      String
+  role      String?
+  budget    String?
+  content   Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@schema("markplan")
+}
